@@ -1,5 +1,5 @@
 {
-  "name": "gitauth",
+  "name": "ghobject",
   "description": "github oauth express app",
   "version": "0.0.1",
   "dependencies": {
