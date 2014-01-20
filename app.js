@@ -24,7 +24,7 @@ function checkToken(req, res){
 
 app.get('/', function(req, res) {
   if (res.cookie.token){
-    res.send('Got my token. Click to <a href="/logout">discard</a><br>'+
+    res.send('Welcome '+res.cookie.user.login+'! Click to <a href="/logout">logout</a><br>'+
       '<a href="/user">User Details</a><br>'+
       '<a href="/orgs">User Organizations</a><br>'+
       '<a href="/repos">User Repos</a>');
@@ -49,7 +49,7 @@ app.get('/callback', function(req, res) {
 app.get('/user', function(req, res){
   checkToken(req, res);
   var options = {
-    url: 'https://api.github.com/user',
+    url: res.cookie.user.url,
     headers: {
       'User-Agent': 'request',
       'Authorization': 'token ' + res.cookie.token.access_token,
@@ -65,7 +65,7 @@ app.get('/user', function(req, res){
 app.get('/repos', function(req, res){
   checkToken(req, res);
   var options = {
-    url: 'https://api.github.com/users/' + res.cookie.user + '/repos',
+    url: res.cookie.user.repos_url,
     headers: {
       'User-Agent': 'request',
       'Authorization': 'token ' + res.cookie.token.access_token,
@@ -81,7 +81,7 @@ app.get('/repos', function(req, res){
 app.get('/orgs', function(req, res){
   checkToken(req, res);
   var options = {
-    url: 'https://api.github.com/users/' + res.cookie.user + '/orgs',
+    url: res.cookie.user.organizations_url,
     headers: {
       'User-Agent': 'request',
       'Authorization': 'token ' + res.cookie.token.access_token,
@@ -110,10 +110,11 @@ githubOAuth.on('token', function(token, serverResponse) {
   };
   request.get(options, function (error, response, body) {
     if (error) return res.send('error', body, error, response)
-    serverResponse.cookie.user = JSON.parse(body).login;
+    serverResponse.cookie.user = JSON.parse(body);
+    console.log(serverResponse.cookie.user);
+    serverResponse.redirect('/');
   });
-  serverResponse.redirect('/');
-  //serverResponse.end(JSON.stringify(token))
+  
 })
 
 app.listen(3000);
