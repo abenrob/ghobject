@@ -15,10 +15,12 @@ var githubOAuth = require('github-oauth')({
 
 githubOAuth.addRoutes(app);
 
-function checkToken(req, res){
+function checkToken(req, res, callback){
    if (! res.cookie.token){
     console.log('caught!');
     res.redirect('/');
+  } else {
+    callback();
   }
 }
 
@@ -47,51 +49,57 @@ app.get('/callback', function(req, res) {
 });
 
 app.get('/user', function(req, res){
-  checkToken(req, res);
-  var options = {
-    url: res.cookie.user.url,
-    headers: {
-      'User-Agent': 'request',
-      'Authorization': 'token ' + res.cookie.token.access_token,
-      'json':true
-    }
-  };
-  request.get(options, function (error, response, body) {
-    if (error) return res.send('error', body, error, response)
-    res.send(body);
+  checkToken(req, res, function(){
+    var options = {
+      url: res.cookie.user.url,
+      headers: {
+        'User-Agent': 'ghobject',
+        'Authorization': 'token ' + res.cookie.token.access_token,
+        'json':true
+      }
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return res.send('error', body, error, response)
+      res.send(body);
+    });
   });
+  
 });
 
 app.get('/repos', function(req, res){
-  checkToken(req, res);
-  var options = {
-    url: res.cookie.user.repos_url,
-    headers: {
-      'User-Agent': 'request',
-      'Authorization': 'token ' + res.cookie.token.access_token,
-      'json':true
-    }
-  };
-  request.get(options, function (error, response, body) {
-    if (error) return res.send('error', body, error, response)
-    res.send(body);
+  checkToken(req, res, function(){
+    var options = {
+      url: res.cookie.user.repos_url,
+      headers: {
+        'User-Agent': 'ghobject',
+        'Authorization': 'token ' + res.cookie.token.access_token,
+        'json':true
+      }
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return res.send('error', body, error, response)
+      res.send(body);
+    }); 
   });
+
 });
 
 app.get('/orgs', function(req, res){
-  checkToken(req, res);
-  var options = {
-    url: res.cookie.user.organizations_url,
-    headers: {
-      'User-Agent': 'request',
-      'Authorization': 'token ' + res.cookie.token.access_token,
-      'json':true
-    }
-  };
-  request.get(options, function (error, response, body) {
-    if (error) return res.send('error', body, error, response)
-    res.send(body);
+  checkToken(req, res, function(){
+    var options = {
+      url: res.cookie.user.organizations_url,
+      headers: {
+        'User-Agent': 'ghobject',
+        'Authorization': 'token ' + res.cookie.token.access_token,
+        'json':true
+      }
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return res.send('error', body, error, response)
+      res.send(body);
+    });
   });
+  
 });
 
 githubOAuth.on('error', function(err) {
@@ -103,7 +111,7 @@ githubOAuth.on('token', function(token, serverResponse) {
   var options = {
     url: 'https://api.github.com/user',
     headers: {
-      'User-Agent': 'request',
+      'User-Agent': 'ghobject',
       'Authorization': 'token ' + token.access_token,
       'json':true
     }
