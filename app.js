@@ -84,6 +84,25 @@ app.get('/repos', function(req, res){
 
 });
 
+app.get('/repos/:repo', function(req, res){
+  checkToken(req, res, function(){
+    var options = {
+      url: 'https://api.github.com/repos/'+res.cookie.user.login+'/'+req.params.repo,
+      headers: {
+        'User-Agent': 'ghobject',
+        'Authorization': 'token ' + res.cookie.token.access_token,
+        'json':true
+      }
+    };
+    console.log(options.url);
+    request.get(options, function (error, response, body) {
+      if (error) return res.send('error', body, error, response)
+      res.send(body);
+    }); 
+  });
+
+});
+
 app.get('/orgs', function(req, res){
   checkToken(req, res, function(){
     var options = {
