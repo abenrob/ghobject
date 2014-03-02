@@ -1,0 +1,15 @@
+extend layout 
+block content
+	if user
+		h2 Welcome #{user.login}
+		//img(src="#{user.avatar_url}")
+		p
+			a(href="/logout") Logout
+		p
+			a(href="/user") User object
+		p
+			a(href="/orgs") Organizations object
+		p
+			a(href="/repos") User repos object
+	else
+		h2 Authenticate with #[a(href="/login") GitHub]

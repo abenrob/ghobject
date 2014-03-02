@@ -2,9 +2,13 @@
   "name": "ghobject",
   "description": "github oauth express app",
   "version": "0.0.1",
+  "private": "true",
   "dependencies": {
     "express": "3.x",
     "github-oauth": "0.0.4",
-    "request": "~2.30.0"
+    "request": "~2.30.0",
+    "jade": "~1.2.0",
+    "stylus": "~0.42.2",
+    "nib": "~1.0.2"
   }
 }

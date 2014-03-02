@@ -1,8 +1,20 @@
 var request = require('request'),
     express = require('express'),
-    app = express();
+    stylus = require('stylus'), 
+    nib = require('nib'),
+    url = require("url"),
+    qs = require("querystring");
 
-app.use(express.cookieParser());
+var app = express();
+function compile(str, path) { 
+  return stylus(str) .set('filename', path).use(nib())
+} 
+app.set('views', __dirname + '/views')
+app.set('view engine', 'jade') 
+app.use(express.logger('dev')) 
+app.use(stylus.middleware( { src: __dirname + '/public' , compile: compile } )) 
+app.use(express.static(__dirname + '/public')) 
+app.use(express.cookieParser())
 
 var githubOAuth = require('github-oauth')({
   githubClient: 'c23b616f989578ebc987',//process.env['GITHUB_CLIENT'],
@@ -17,21 +29,24 @@ githubOAuth.addRoutes(app);
 
 function checkToken(req, res, callback){
    if (! res.cookie.token){
-    console.log('caught!');
+    //console.log('caught!');
     res.redirect('/');
   } else {
+    console.log(res.cookie.user);
     callback();
   }
 }
 
 app.get('/', function(req, res) {
   if (res.cookie.token){
-    res.send('Welcome '+res.cookie.user.login+'! Click to <a href="/logout">logout</a><br>'+
-      '<a href="/user">User Details</a><br>'+
-      '<a href="/orgs">User Organizations</a><br>'+
-      '<a href="/repos">User Repos</a>');
+    res.render('index', { user : res.cookie.user } )
+    // res.send('Welcome '+res.cookie.user.login+'! Click to <a href="/logout">logout</a><br>'+
+    //   '<a href="/user">User Details</a><br>'+
+    //   '<a href="/orgs">User Organizations</a><br>'+
+    //   '<a href="/repos">User Repos</a>');
   } else {
-    res.send('Get my token. Click to <a href="/login">fetch</a>.');
+    res.render('index', { user : null } )
+    //res.send('Get my token. Click to <a href="/login">fetch</a>.');
   }
 });
 
@@ -46,6 +61,45 @@ app.get('/logout', function(req, res) {
 
 app.get('/callback', function(req, res) {
   res.send(githubOAuth.callback(req, res));
+});
+
+app.get('/endpoint', function(req, res){
+  checkToken(req, res, function(){
+    if(req.method=="POST") {
+      var body="";
+
+      req.on("data", function (data) {
+        body +=data;
+      });
+
+      req.on("end",function(){
+        var variables =  qs.parse(body);
+      });
+
+      req.on("error",function(e){
+        console.log('problem with request: ' + e.message);
+      });
+    }
+    else if(req.method=="GET") {
+      var variables = url.parse(req.url, true).query;
+    }
+
+    //res.send(variables);
+    var options = {
+      url: variables.url,
+      headers: {
+        'User-Agent': 'ghobject',
+        'Authorization': 'token ' + res.cookie.token.access_token,
+        'json':true
+      }
+    };
+    console.log(options.url);
+    request.get(options, function (error, response, body) {
+      if (error) return res.send('error', body, error, response)
+      res.send(body);
+    }); 
+ });
+
 });
 
 app.get('/user', function(req, res){
@@ -138,10 +192,9 @@ githubOAuth.on('token', function(token, serverResponse) {
   request.get(options, function (error, response, body) {
     if (error) return res.send('error', body, error, response)
     serverResponse.cookie.user = JSON.parse(body);
-    console.log(serverResponse.cookie.user);
+    //console.log(serverResponse.cookie.user);
     serverResponse.redirect('/');
   });
-  
 })
 
 app.listen(3000);
